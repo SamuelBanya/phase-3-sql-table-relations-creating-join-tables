@@ -1,0 +1,144 @@
+Example SQL queries used:
+#+begin_src sql
+sqlite3 pets_database.db
+
+.headers on
+.mode column
+.width auto
+
+sqlite> SELECT * FROM cats WHERE owner_id = 1;
+#+end_src
+
+'Join table': table that contains common fields from two or more other tables
+
+NOTE: The main highlight of a 'Join' table is that they are used to create multiple 'one to many' relationships from
+table to table.
+
+Creating the related tables, 'cats', 'owners', and 'cat_owners':
+#+begin_src sql
+CREATE TABLE cats (
+  id INTEGER PRIMARY KEY,
+  name TEXT,
+  age INTEGER,
+  breed TEXT
+);
+
+CREATE TABLE owners (
+  id INTEGER PRIMARY KEY,
+  name TEXT
+);
+#+end_src
+
+Inserting values into these tables:
+#+begin_src sql
+INSERT INTO owners (name) VALUES ("mugumogu");
+INSERT INTO owners (name) VALUES ("Sophie");
+INSERT INTO owners (name) VALUES ("Penny");
+INSERT INTO cats (name, age, breed) VALUES ("Maru", 3, "Scottish Fold");
+INSERT INTO cats (name, age, breed) VALUES ("Hana", 1, "Tabby");
+INSERT INTO cats (name, age, breed) VALUES ("Nona", 4, "Tortoiseshell");
+INSERT INTO cats (name, age, breed) VALUES ("Lil' Bub", 2, "perma-kitten");
+#+end_src
+
+Creating the 'Join' table, 'cat_owners':
+#+begin_src sql
+CREATE TABLE cat_owners (
+  cat_id INTEGER,
+  owner_id INTEGER
+);
+#+end_src
+
+Inserting values into the 'Join' table, 'cat_owners':
+#+begin_src sql
+INSERT INTO cat_owners (cat_id, owner_id) VALUES (3, 2);
+#+end_src
+
+Checking values for 'Join' table, 'cat_owners':
+#+begin_src sql
+SELECT * FROM cat_owners;
+
+cat_id  owner_id
+------  --------
+3       2
+#+end_src
+
+Inserting 'Nona / Penny' aka newer Cat / Owner relationship into the 'cat_owners' table:
+#+begin_src sql
+INSERT INTO cat_owners (cat_id, owner_id) VALUES (3, 3);
+#+end_src
+
+The owner, Sophie, now co-owns another cat, 'Maru', so the related relationship has been updated accordingly:
+#+begin_src sql
+INSERT INTO cat_owners (cat_id, owner_id) VALUES (1, 2);
+#+end_src
+
+Queries For 'Join' Table:
+
+This obtains the specific owners who own a specific cat:
+#+begin_src sql
+SELECT cat_owners.owner_id
+FROM cat_owners
+WHERE cat_id = 3;
+
+owner_id
+--------
+2
+3
+#+end_src
+
+This obtains the specific owners who co-own a cat:
+#+begin_src sql
+SELECT cat_owners.cat_id
+FROM cat_owners
+WHERE owner_id = 2;
+
+cat_id
+------
+3
+1
+#+end_src
+
+Advanced query that basically just lists the owners of the cat with the 'cat_id' value of '3':
+#+begin_src sql
+SELECT owners.name
+FROM owners
+INNER JOIN cat_owners
+ON owners.id = cat_owners.owner_id WHERE cat_owners.cat_id = 3;
+
+name
+--------
+mugumogu
+Sophie
+#+end_src
+
+Advanced query to look for all cats owned by Sophie:
+#+begin_src sql
+SELECT cats.name
+FROM cats
+INNER JOIN cat_owners
+ON cats.id = cat_owners.cat_id
+WHERE cat_owners.owner_id = 2;
+
+name
+---------------
+Nona
+Maru
+#+end_src
+
+More detailed advanced query:
+#+begin_src sql
+SELECT
+  cats.name AS cat_name,
+  owners.name AS owner_name
+FROM cats
+INNER JOIN cat_owners
+  ON cats.id = cat_owners.cat_id
+INNER JOIN owners
+  ON cat_owners.owner_id = owners.id;
+
+cat_name    owner_name
+----------  ----------
+Nona        Sophie
+Nona        Penny
+Maru        Sophie
+#+end_src
